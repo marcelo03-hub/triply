@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Destination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminDestinationController extends Controller
@@ -48,13 +50,18 @@ class AdminDestinationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $slug = Str::slug($request->input('nama'));
+        $request->merge(['slug' => $slug]);
+
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:destinations,slug'],
             'lokasi' => ['required', 'string', 'max:255'],
             'wilayah' => ['required', 'in:domestik,internasional'],
             'kategori' => ['required', 'in:pantai,alam,budaya,kota,religi'],
             'deskripsi' => ['required', 'string'],
             'gambar' => ['nullable', 'string', 'max:500'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
             'estimasi_biaya' => ['nullable', 'string', 'max:255'],
             'rekomendasi_durasi' => ['nullable', 'string', 'max:100'],
             'rating' => ['nullable', 'numeric', 'min:1', 'max:5'],
@@ -63,7 +70,12 @@ class AdminDestinationController extends Controller
             'is_popular' => ['nullable', 'boolean'],
         ]);
 
-        $validated['slug'] = Str::slug($validated['nama']);
+        if ($request->hasFile('foto')) {
+            $path = $request->file('foto')->store('destinations', 'public');
+            $validated['gambar'] = $path;
+        }
+        unset($validated['foto']);
+
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['rating'] = $validated['rating'] ?? 4.8;
 
@@ -86,13 +98,18 @@ class AdminDestinationController extends Controller
      */
     public function update(Request $request, Destination $destination): RedirectResponse
     {
+        $slug = Str::slug($request->input('nama'));
+        $request->merge(['slug' => $slug]);
+
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', Rule::unique('destinations', 'slug')->ignore($destination->id)],
             'lokasi' => ['required', 'string', 'max:255'],
             'wilayah' => ['required', 'in:domestik,internasional'],
             'kategori' => ['required', 'in:pantai,alam,budaya,kota,religi'],
             'deskripsi' => ['required', 'string'],
             'gambar' => ['nullable', 'string', 'max:500'],
+            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
             'estimasi_biaya' => ['nullable', 'string', 'max:255'],
             'rekomendasi_durasi' => ['nullable', 'string', 'max:100'],
             'rating' => ['nullable', 'numeric', 'min:1', 'max:5'],
@@ -101,7 +118,15 @@ class AdminDestinationController extends Controller
             'is_popular' => ['nullable', 'boolean'],
         ]);
 
-        $validated['slug'] = Str::slug($validated['nama']);
+        if ($request->hasFile('foto')) {
+            if ($destination->gambar && str_starts_with($destination->gambar, 'destinations/')) {
+                Storage::disk('public')->delete($destination->gambar);
+            }
+            $path = $request->file('foto')->store('destinations', 'public');
+            $validated['gambar'] = $path;
+        }
+        unset($validated['foto']);
+
         $validated['is_popular'] = $request->boolean('is_popular');
         $validated['rating'] = $validated['rating'] ?? 4.8;
 

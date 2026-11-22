@@ -65,6 +65,10 @@ class Destination extends Model
             return $this->gambar;
         }
 
+        if (str_starts_with($this->gambar, 'destinations/')) {
+            return asset('storage/'.$this->gambar);
+        }
+
         return asset($this->gambar);
     }
 }

@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class TripController extends Controller
@@ -17,7 +18,10 @@ class TripController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Trip::query()->orderBy('tanggal_mulai', 'asc');
+        $userId = Auth::id();
+        $query = Trip::query()
+            ->where('user_id', $userId)
+            ->orderBy('tanggal_mulai', 'asc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -34,10 +38,10 @@ class TripController extends Controller
         $trips = $query->paginate(9)->withQueryString();
 
         $stats = [
-            'total' => Trip::count(),
-            'planned' => Trip::where('status', 'planned')->count(),
-            'ongoing' => Trip::where('status', 'ongoing')->count(),
-            'completed' => Trip::where('status', 'completed')->count(),
+            'total' => Trip::where('user_id', $userId)->count(),
+            'planned' => Trip::where('user_id', $userId)->where('status', 'planned')->count(),
+            'ongoing' => Trip::where('user_id', $userId)->where('status', 'ongoing')->count(),
+            'completed' => Trip::where('user_id', $userId)->where('status', 'completed')->count(),
         ];
 
         return view('trips.index', compact('trips', 'stats'));
@@ -83,9 +87,7 @@ class TripController extends Controller
             }
         }
 
-        if (Auth::check()) {
-            $validated['user_id'] = Auth::id();
-        }
+        $validated['user_id'] = Auth::id();
 
         $trip = Trip::create($validated);
 
@@ -98,6 +100,8 @@ class TripController extends Controller
      */
     public function show(Trip $trip): View
     {
+        Gate::authorize('view', $trip);
+
         $trip->load('itineraries');
         $start = Carbon::parse($trip->tanggal_mulai);
         $end = Carbon::parse($trip->tanggal_selesai);
@@ -149,6 +153,8 @@ class TripController extends Controller
      */
     public function edit(Trip $trip): View
     {
+        Gate::authorize('update', $trip);
+
         $destinations = Destination::orderBy('nama')->get();
 
         return view('trips.edit', compact('trip', 'destinations'));
@@ -159,6 +165,8 @@ class TripController extends Controller
      */
     public function update(Request $request, Trip $trip): RedirectResponse
     {
+        Gate::authorize('update', $trip);
+
         $validated = $request->validate([
             'nama_perjalanan' => 'required|string|max:255',
             'destinasi' => 'required|string|max:255',
@@ -180,6 +188,8 @@ class TripController extends Controller
      */
     public function destroy(Trip $trip): RedirectResponse
     {
+        Gate::authorize('delete', $trip);
+
         $nama = $trip->nama_perjalanan;
         $trip->delete();
 
@@ -192,7 +202,11 @@ class TripController extends Controller
      */
     public function jadwal(): View
     {
-        $trips = Trip::with('itineraries')->orderBy('tanggal_mulai', 'asc')->get();
+        $userId = Auth::id();
+        $trips = Trip::with('itineraries')
+            ->where('user_id', $userId)
+            ->orderBy('tanggal_mulai', 'asc')
+            ->get();
 
         $ongoingTrips = $trips->where('status', 'ongoing');
         $plannedTrips = $trips->where('status', 'planned');
@@ -206,7 +220,11 @@ class TripController extends Controller
      */
     public function anggaran(): View
     {
-        $trips = Trip::with('itineraries')->orderBy('tanggal_mulai', 'desc')->get();
+        $userId = Auth::id();
+        $trips = Trip::with('itineraries')
+            ->where('user_id', $userId)
+            ->orderBy('tanggal_mulai', 'desc')
+            ->get();
 
         $totalAnggaran = $trips->sum('anggaran');
         $averageAnggaran = $trips->count() > 0 ? $totalAnggaran / $trips->count() : 0;

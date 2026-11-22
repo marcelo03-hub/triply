@@ -27,7 +27,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.destinations.store') }}" method="POST"
+    <form action="{{ route('admin.destinations.store') }}" method="POST" enctype="multipart/form-data" onsubmit="handleFormSubmit(this)"
           class="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-8 space-y-6">
         @csrf
 
@@ -38,7 +38,13 @@
                 </label>
                 <input type="text" name="nama" value="{{ old('nama') }}" required
                        placeholder="Contoh: Pulau Nusa Penida"
-                       class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                       class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('nama') border-red-500 @enderror">
+                @error('nama')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+                @error('slug')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -47,7 +53,10 @@
                 </label>
                 <input type="text" name="lokasi" value="{{ old('lokasi') }}" required
                        placeholder="Contoh: Klungkung, Bali, Indonesia"
-                       class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                       class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('lokasi') border-red-500 @enderror">
+                @error('lokasi')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -81,10 +90,14 @@
         <div class="grid md:grid-cols-3 gap-6">
             <div>
                 <label class="block text-sm font-bold text-slate-900 mb-2">
-                    Estimasi Biaya Mulai Dari (Rp) <span class="text-red-500">*</span>
+                    Estimasi Biaya <span class="text-red-500">*</span>
                 </label>
-                <input type="number" name="estimasi_biaya" value="{{ old('estimasi_biaya', 2500000) }}" min="0" step="100000" required
+                <input type="text" name="estimasi_biaya" value="{{ old('estimasi_biaya', 'Rp 2.500.000 - Rp 5.000.000') }}" required
+                       placeholder="Contoh: Rp 3.000.000 - Rp 6.000.000 atau 3500000"
                        class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                @error('estimasi_biaya')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -105,14 +118,28 @@
             </div>
         </div>
 
-        <div>
-            <label class="block text-sm font-bold text-slate-900 mb-2">
-                URL Foto/Gambar Destinasi
-            </label>
-            <input type="text" name="gambar" value="{{ old('gambar') }}"
-                   placeholder="https://images.unsplash.com/... atau /images/nama-file.jpg"
-                   class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-            <p class="text-xs text-slate-400 mt-1">Kosongkan jika ingin memakai foto default acak pemandangan alam.</p>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-bold text-slate-900 mb-2">
+                    Upload Berkas Foto (Lokal / Gambar)
+                </label>
+                <input type="file" name="foto" accept="image/*"
+                       class="w-full border border-slate-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                @error('foto')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+                <p class="text-xs text-slate-400 mt-1">Format: JPG, PNG, WEBP (Maksimal 4MB).</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-900 mb-2">
+                    Atau Gunakan URL Gambar Eksternal
+                </label>
+                <input type="text" name="gambar" value="{{ old('gambar') }}"
+                       placeholder="https://images.unsplash.com/... atau /images/nama-file.jpg"
+                       class="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <p class="text-xs text-slate-400 mt-1">Kosongkan jika ingin memakai foto default acak pemandangan alam.</p>
+            </div>
         </div>
 
         <div>
@@ -154,8 +181,9 @@
 
         <div class="pt-4 flex items-center gap-3">
             <button type="submit"
-                    class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl transition text-sm shadow-sm">
-                Simpan Destinasi Baru
+                    class="submit-btn bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-xl transition text-sm shadow-sm flex items-center gap-2">
+                <span class="btn-spinner hidden animate-spin">⏳</span>
+                <span class="btn-text">Simpan Destinasi Baru</span>
             </button>
             <a href="{{ route('admin.destinations.index') }}"
                class="px-5 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">

@@ -222,6 +222,21 @@
                 mobileMenu.classList.toggle('hidden');
             });
         }
+
+        // Global helper for form submit loading state
+        function handleFormSubmit(form) {
+            const btn = form.querySelector('.submit-btn');
+            if (!btn) return;
+            const spinner = btn.querySelector('.btn-spinner');
+            const text = btn.querySelector('.btn-text');
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            if (spinner) spinner.classList.remove('hidden');
+            if (text && !text.dataset.originalText) {
+                text.dataset.originalText = text.innerText;
+                text.innerText = 'Menyimpan...';
+            }
+        }
     </script>
     @stack('scripts')
 </body>

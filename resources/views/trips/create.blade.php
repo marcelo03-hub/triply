@@ -27,7 +27,7 @@
         </div>
     @endif
 
-    <form action="{{ route('trips.store') }}" method="POST"
+    <form action="{{ route('trips.store') }}" method="POST" onsubmit="handleFormSubmit(this)"
           class="bg-white rounded-3xl border border-slate-200/80 shadow-md p-8 md:p-10 space-y-6">
         @csrf
 
@@ -41,6 +41,9 @@
                    placeholder="Contoh: Liburan Musim Dingin ke Jepang, Eksplorasi Bali..."
                    class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('nama_perjalanan') border-red-500 @enderror"
                    required>
+            @error('nama_perjalanan')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
             <p class="text-xs text-slate-400 mt-1.5">Berikan nama unik yang berkesan untuk liburanmu.</p>
         </div>
 
@@ -56,6 +59,9 @@
                        class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('destinasi') border-red-500 @enderror"
                        required>
             </div>
+            @error('destinasi')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
             
             <!-- Quick Destination Tags from DB -->
             <div class="mt-4 space-y-2">
@@ -111,6 +117,9 @@
                        value="{{ old('tanggal_mulai', date('Y-m-d', strtotime('+7 days'))) }}"
                        class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('tanggal_mulai') border-red-500 @enderror"
                        required>
+                @error('tanggal_mulai')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -121,6 +130,9 @@
                        value="{{ old('tanggal_selesai', date('Y-m-d', strtotime('+12 days'))) }}"
                        class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('tanggal_selesai') border-red-500 @enderror"
                        required>
+                @error('tanggal_selesai')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -139,6 +151,9 @@
                        class="w-full border border-slate-300 rounded-xl pl-12 pr-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('anggaran') border-red-500 @enderror"
                        required>
             </div>
+            @error('anggaran')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
             <p class="text-xs text-slate-400 mt-1.5">
                 Hitung estimasi otomatis untuk domestik / luar negeri di <a href="{{ route('anggaran') }}" target="_blank" class="text-emerald-700 font-bold hover:underline">Kalkulator Anggaran ↗</a>
             </p>
@@ -152,13 +167,17 @@
             <textarea name="catatan" rows="4"
                       placeholder="Contoh: Tiket pesawat sudah dipesan, paspor aktif, beli e-SIM, daftar tempat belanja & kuliner favorit..."
                       class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">{{ old('catatan') }}</textarea>
+            @error('catatan')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <!-- Submit Button -->
         <div class="pt-4 space-y-3">
             <button type="submit"
-                    class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 text-base">
-                Simpan & Buat Rencana Perjalanan →
+                    class="submit-btn w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 text-base flex items-center justify-center gap-2">
+                <span class="btn-spinner hidden animate-spin">⏳</span>
+                <span class="btn-text">Simpan & Buat Rencana Perjalanan →</span>
             </button>
             <a href="{{ route('trips.index') }}" 
                class="block text-center text-sm font-semibold text-slate-500 hover:text-slate-800 py-2">

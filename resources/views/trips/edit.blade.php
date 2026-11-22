@@ -27,7 +27,7 @@
         </div>
     @endif
 
-    <form action="{{ route('trips.update', $trip) }}" method="POST"
+    <form action="{{ route('trips.update', $trip) }}" method="POST" onsubmit="handleFormSubmit(this)"
           class="bg-white rounded-3xl border border-slate-200/80 shadow-md p-8 md:p-10 space-y-6">
         @csrf
         @method('PUT')
@@ -42,6 +42,9 @@
                    placeholder="Contoh: Liburan Akhir Tahun ke Bali..."
                    class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('nama_perjalanan') border-red-500 @enderror"
                    required>
+            @error('nama_perjalanan')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <!-- Destinasi -->
@@ -54,6 +57,9 @@
                    placeholder="Ketik destinasi tujuanmu..."
                    class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('destinasi') border-red-500 @enderror"
                    required>
+            @error('destinasi')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
             
             @if(isset($destinations) && $destinations->isNotEmpty())
                 <div class="mt-3 flex flex-wrap gap-1.5 items-center">
@@ -73,11 +79,14 @@
             <label class="block text-sm font-bold text-slate-900 mb-2">
                 Status Perjalanan <span class="text-red-500">*</span>
             </label>
-            <select name="status" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+            <select name="status" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('status') border-red-500 @enderror">
                 <option value="planned" {{ old('status', $trip->status) === 'planned' ? 'selected' : '' }}>⏳ Direncanakan (Belum Berangkat)</option>
                 <option value="ongoing" {{ old('status', $trip->status) === 'ongoing' ? 'selected' : '' }}>✈️ Sedang Berlangsung</option>
                 <option value="completed" {{ old('status', $trip->status) === 'completed' ? 'selected' : '' }}>✅ Telah Selesai</option>
             </select>
+            @error('status')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <!-- Tanggal Keberangkatan & Kepulangan -->
@@ -87,9 +96,12 @@
                     Tanggal Mulai / Berangkat <span class="text-red-500">*</span>
                 </label>
                 <input type="date" name="tanggal_mulai" 
-                       value="{{ old('tanggal_mulai', $trip->tanggal_mulai) }}"
+                       value="{{ old('tanggal_mulai', \Carbon\Carbon::parse($trip->tanggal_mulai)->format('Y-m-d')) }}"
                        class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('tanggal_mulai') border-red-500 @enderror"
                        required>
+                @error('tanggal_mulai')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -97,9 +109,12 @@
                     Tanggal Selesai / Pulang <span class="text-red-500">*</span>
                 </label>
                 <input type="date" name="tanggal_selesai" 
-                       value="{{ old('tanggal_selesai', $trip->tanggal_selesai) }}"
+                       value="{{ old('tanggal_selesai', \Carbon\Carbon::parse($trip->tanggal_selesai)->format('Y-m-d')) }}"
                        class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('tanggal_selesai') border-red-500 @enderror"
                        required>
+                @error('tanggal_selesai')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -117,6 +132,9 @@
                        class="w-full border border-slate-300 rounded-xl pl-12 pr-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm @error('anggaran') border-red-500 @enderror"
                        required>
             </div>
+            @error('anggaran')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <!-- Catatan Perjalanan -->
@@ -126,13 +144,17 @@
             </label>
             <textarea name="catatan" rows="4"
                       class="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">{{ old('catatan', $trip->catatan) }}</textarea>
+            @error('catatan')
+                <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <!-- Submit Button -->
         <div class="pt-4 space-y-3">
             <button type="submit"
-                    class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 text-base">
-                Perbarui Rencana Perjalanan →
+                    class="submit-btn w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 text-base flex items-center justify-center gap-2">
+                <span class="btn-spinner hidden animate-spin">⏳</span>
+                <span class="btn-text">Perbarui Rencana Perjalanan →</span>
             </button>
             <a href="{{ route('trips.show', $trip) }}" 
                class="block text-center text-sm font-semibold text-slate-500 hover:text-slate-800 py-2">

@@ -6,6 +6,7 @@ use App\Models\Itinerary;
 use App\Models\Trip;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ItineraryController extends Controller
 {
@@ -14,6 +15,8 @@ class ItineraryController extends Controller
      */
     public function store(Request $request, Trip $trip): RedirectResponse
     {
+        Gate::authorize('update', $trip);
+
         $validated = $request->validate([
             'hari_ke' => ['required', 'integer', 'min:1'],
             'waktu' => ['nullable', 'string', 'max:50'],
@@ -37,6 +40,9 @@ class ItineraryController extends Controller
      */
     public function update(Request $request, Trip $trip, Itinerary $itinerary): RedirectResponse
     {
+        Gate::authorize('update', $trip);
+        Gate::authorize('update', $itinerary);
+
         $validated = $request->validate([
             'hari_ke' => ['required', 'integer', 'min:1'],
             'waktu' => ['nullable', 'string', 'max:50'],
@@ -60,6 +66,9 @@ class ItineraryController extends Controller
      */
     public function toggle(Trip $trip, Itinerary $itinerary): RedirectResponse
     {
+        Gate::authorize('update', $trip);
+        Gate::authorize('update', $itinerary);
+
         $newStatus = $itinerary->status === 'completed' ? 'pending' : 'completed';
         $itinerary->update(['status' => $newStatus]);
 
@@ -74,6 +83,9 @@ class ItineraryController extends Controller
      */
     public function destroy(Trip $trip, Itinerary $itinerary): RedirectResponse
     {
+        Gate::authorize('update', $trip);
+        Gate::authorize('delete', $itinerary);
+
         $kegiatan = $itinerary->kegiatan;
         $itinerary->delete();
 

@@ -48,7 +48,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('login') }}" method="POST" class="space-y-5">
+            <form action="{{ route('login') }}" method="POST" class="space-y-5" onsubmit="handleFormSubmit(this)">
                 @csrf
 
                 <!-- Email Input -->
@@ -68,6 +68,9 @@
                                class="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 @error('email') border-red-500 @enderror"
                                required autofocus>
                     </div>
+                    @error('email')
+                        <p class="text-xs text-red-500 mt-1.5">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Password Input -->
@@ -89,21 +92,27 @@
                             <span id="eyeIcon">👁️</span>
                         </button>
                     </div>
+                    @error('password')
+                        <p class="text-xs text-red-500 mt-1.5">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Remember Me & Forgot Password -->
                 <div class="flex items-center justify-between text-xs">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="remember" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
-                        <span class="text-slate-600">Ingat saya di perangkat ini</span>
+                        <span class="text-slate-600">Ingat saya</span>
                     </label>
+                    <a href="{{ route('password.request') }}" class="font-semibold text-emerald-700 hover:underline">
+                        Lupa password?
+                    </a>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit" 
-                        class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 rounded-xl shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2">
-                    <span>Masuk ke Akun</span>
-                    <span>→</span>
+                        class="submit-btn w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 rounded-xl shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2">
+                    <span class="btn-spinner hidden animate-spin">⏳</span>
+                    <span class="btn-text">Masuk ke Akun →</span>
                 </button>
             </form>
 

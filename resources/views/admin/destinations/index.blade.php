@@ -102,8 +102,8 @@
                                 </div>
                             </td>
                             <td class="py-4 px-6 font-semibold text-slate-700">
-                                Rp {{ number_format($dest->estimasi_biaya, 0, ',', '.') }}
-                                <span class="block text-[11px] text-slate-400 font-normal">⏱️ {{ $dest->rekomendasi_durasi }}</span>
+                                {{ $dest->estimasi_biaya ? (is_numeric($dest->estimasi_biaya) ? 'Rp ' . number_format((float) $dest->estimasi_biaya, 0, ',', '.') : $dest->estimasi_biaya) : '-' }}
+                                <span class="block text-[11px] text-slate-400 font-normal">⏱️ {{ $dest->rekomendasi_durasi ?? '-' }}</span>
                             </td>
                             <td class="py-4 px-6">
                                 <span class="inline-flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg text-xs">
