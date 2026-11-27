@@ -22,6 +22,8 @@ class Itinerary extends Model
         'catatan',
         'estimasi_biaya',
         'status',
+        'latitude',
+        'longitude',
     ];
 
     /**
@@ -32,6 +34,8 @@ class Itinerary extends Model
         return [
             'hari_ke' => 'integer',
             'estimasi_biaya' => 'decimal:2',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 

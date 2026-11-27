@@ -13,8 +13,17 @@
             Asisten Perjalanan AI
         </h1>
         <p class="text-slate-600 text-sm md:text-base mt-2">
-            Ketik kota tujuan dan preferensi gaya liburanmu, AI kami akan menyusunkan jadwal itinerary harian, rekomendasi spot terbaik, serta rincian estimasi biaya secara otomatis.
+            Ketik destinasi impian, tanggal, jumlah orang, dan preferensi gaya liburanmu. AI akan menyusunkan jadwal itinerary harian, rekomendasi spot terbaik, serta rincian estimasi biaya secara instan.
         </p>
+    </div>
+
+    <!-- Error Banner (Hidden by default) -->
+    <div id="aiErrorBanner" class="hidden mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs font-semibold flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <span id="aiErrorMessage">Gagal menyusun itinerary. Periksa kembali data inputanmu.</span>
+        </div>
+        <button type="button" onclick="document.getElementById('aiErrorBanner').classList.add('hidden')" class="text-red-500 hover:text-red-700">✕</button>
     </div>
 
     <!-- AI Generator Input Card -->
@@ -29,7 +38,17 @@
                     </label>
                     <input type="text" id="aiDestinasi" name="destinasi" required
                            value="{{ $selectedTrip ? $selectedTrip->destinasi : request('destinasi', 'Bali') }}"
-                           placeholder="Contoh: Bali, Tokyo, Lombok, Swiss..."
+                           placeholder="Contoh: Bali, Lombok, Yogyakarta, Tokyo..."
+                           class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+                </div>
+
+                <!-- Tanggal Mulai -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Tanggal Mulai
+                    </label>
+                    <input type="date" id="aiTanggalMulai" name="tanggal_mulai"
+                           value="{{ date('Y-m-d', strtotime('+7 days')) }}"
                            class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
                 </div>
 
@@ -48,6 +67,20 @@
                         <option value="10">10 Hari (Long Trip)</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Jumlah Orang -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Jumlah Wisatawan (Orang)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="aiJumlahOrang" name="jumlah_orang" min="1" max="50" value="2"
+                               class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+                        <span class="absolute right-4 top-3.5 text-xs text-slate-400 font-bold">Orang</span>
+                    </div>
+                </div>
 
                 <!-- Gaya Liburan -->
                 <div>
@@ -63,12 +96,11 @@
                         <option value="mewah">💎 Liburan Mewah & Nyaman</option>
                     </select>
                 </div>
-            </div>
 
-            <div class="grid md:grid-cols-2 gap-6 items-end">
+                <!-- Budget Anggaran -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                        Budget Anggaran (Opsional)
+                        Target Anggaran (Opsional)
                     </label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-4 font-bold text-slate-400 text-sm pointer-events-none">
@@ -80,22 +112,23 @@
                                class="w-full border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
                     </div>
                 </div>
+            </div>
 
-                <div>
-                    <button type="submit" id="generateBtn"
-                            class="w-full bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md transition transform active:scale-98 flex items-center justify-center gap-2 text-sm md:text-base">
-                        <span id="btnIcon">✨</span>
-                        <span id="btnText">Generate Itinerary Otomatis Sekarang</span>
-                    </button>
-                </div>
+            <!-- Submit Button & Quick Chips -->
+            <div class="pt-2">
+                <button type="submit" id="generateBtn"
+                        class="w-full bg-linear-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md transition transform active:scale-98 flex items-center justify-center gap-2 text-sm md:text-base cursor-pointer">
+                    <span id="btnIcon">✨</span>
+                    <span id="btnText">Generate Itinerary Otomatis Sekarang</span>
+                </button>
             </div>
 
             <!-- Quick destination chips -->
-            <div class="pt-2 flex flex-wrap items-center gap-2 text-xs">
+            <div class="pt-1 flex flex-wrap items-center gap-2 text-xs">
                 <span class="text-slate-400 font-semibold">Coba cepat:</span>
-                @foreach(['Bali', 'Lombok', 'Yogyakarta', 'Tokyo, Jepang', 'Swiss', 'Labuan Bajo'] as $suggested)
+                @foreach(['Bali', 'Lombok', 'Yogyakarta', 'Labuan Bajo', 'Bandung', 'Tokyo, Jepang', 'Swiss'] as $suggested)
                     <button type="button" onclick="setQuickDest('{{ $suggested }}')"
-                            class="px-3 py-1 rounded-full bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-600 transition font-medium">
+                            class="px-3 py-1 rounded-full bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-600 transition font-medium cursor-pointer">
                         {{ $suggested }}
                     </button>
                 @endforeach
@@ -107,7 +140,10 @@
     <div id="aiLoading" class="hidden text-center py-16 bg-white rounded-3xl border border-slate-200/80 shadow-xs mb-10">
         <div class="inline-block animate-spin text-4xl mb-4">🪄</div>
         <h3 class="text-xl font-extrabold text-slate-800">Menyusun Itinerary Terbaik...</h3>
-        <p class="text-slate-500 text-sm mt-1">AI sedang menganalisis rute, rekomendasi jam terbaik, dan estimasi biaya.</p>
+        <p class="text-slate-500 text-sm mt-1">AI sedang menganalisis rute, rekomendasi spot wisata terbaik, dan kalkulasi estimasi biaya.</p>
+        <div class="max-w-xs mx-auto mt-4 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-emerald-600 h-1.5 rounded-full animate-pulse w-3/4"></div>
+        </div>
     </div>
 
     <!-- AI Output Container (hidden initially) -->
@@ -121,24 +157,70 @@
                     </span>
                     <span id="resTipeBadge" class="text-xs font-bold bg-emerald-500/20 text-emerald-200 px-3 py-1 rounded-full border border-emerald-400/20"></span>
                 </div>
+
                 <h2 id="resTitle" class="text-2xl md:text-4xl font-extrabold tracking-tight"></h2>
                 <p id="resSummary" class="text-slate-200 text-sm md:text-base mt-3 leading-relaxed max-w-3xl"></p>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/10">
                     <div>
-                        <span class="text-xs text-emerald-300 font-semibold block uppercase tracking-wider">Estimasi Total Biaya Kegiatan</span>
-                        <span id="resTotalKegiatan" class="text-2xl font-extrabold text-white mt-0.5 block"></span>
+                        <span class="text-xs text-emerald-300 font-semibold block uppercase tracking-wider">Durasi & Peserta</span>
+                        <span id="resDurationParty" class="text-lg font-extrabold text-white mt-0.5 block"></span>
                     </div>
                     <div>
-                        <span class="text-xs text-emerald-300 font-semibold block uppercase tracking-wider">Saran Total Anggaran (Include Hotel & Transport)</span>
-                        <span id="resTotalAnggaran" class="text-2xl font-extrabold text-amber-300 mt-0.5 block"></span>
+                        <span class="text-xs text-emerald-300 font-semibold block uppercase tracking-wider">Estimasi Total Biaya Kegiatan</span>
+                        <span id="resTotalKegiatan" class="text-lg font-extrabold text-white mt-0.5 block"></span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-emerald-300 font-semibold block uppercase tracking-wider">Saran Total Anggaran (Hotel + Makan + Transport)</span>
+                        <span id="resTotalAnggaran" class="text-lg font-extrabold text-amber-300 mt-0.5 block"></span>
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-wrap gap-3">
-                    <a id="saveToTripBtn" href="{{ route('trips.create') }}" 
-                       class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-extrabold px-6 py-3 rounded-xl text-sm transition shadow-lg">
-                        <span>💾 Buat Jadi Rencana Liburan Nyata →</span>
+                <!-- 1-Click Save to Trip Action -->
+                <div class="mt-8 flex flex-wrap items-center gap-4 pt-6 border-t border-white/10">
+                    @auth
+                        <form id="saveAiTripForm" action="{{ route('ai.save-trip') }}" method="POST" class="inline">
+                            @csrf
+                            <input type="hidden" name="nama_perjalanan" id="saveTripName">
+                            <input type="hidden" name="destinasi" id="saveTripDestinasi">
+                            <input type="hidden" name="tanggal_mulai" id="saveTripTanggalMulai">
+                            <input type="hidden" name="tanggal_selesai" id="saveTripTanggalSelesai">
+                            <input type="hidden" name="anggaran" id="saveTripAnggaran">
+                            <input type="hidden" name="catatan" id="saveTripCatatan">
+                            <input type="hidden" name="itineraries_json" id="saveTripItinerariesJson">
+
+                            <button type="submit" id="saveAiTripBtn"
+                                    class="inline-flex items-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold px-6 py-3.5 rounded-2xl text-sm transition shadow-lg transform active:scale-95 cursor-pointer">
+                                <span>💾</span>
+                                <span id="saveAiTripBtnText">Simpan ke Perjalanan Saya (1-Klik)</span>
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" 
+                           class="inline-flex items-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold px-6 py-3.5 rounded-2xl text-sm transition shadow-lg">
+                            <span>🔑</span>
+                            <span>Masuk untuk Simpan Rencana Ini</span>
+                        </a>
+                    @endauth
+
+                    <a id="customTripLink" href="{{ route('trips.create') }}" 
+                       class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-5 py-3 rounded-2xl text-xs sm:text-sm transition border border-white/20">
+                        <span>✏️ Sesuaikan Manual di Form Trip</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matched Destination Info (if available) -->
+        <div id="resMatchedDestContainer" class="hidden bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-6">
+            <img id="resMatchedDestImg" src="" alt="" class="w-full sm:w-36 h-28 object-cover rounded-2xl">
+            <div class="flex-1 text-center sm:text-left">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Rekomendasi Destinasi Resmi Triply</span>
+                <h3 id="resMatchedDestTitle" class="text-lg font-bold text-slate-900 mt-0.5"></h3>
+                <p id="resMatchedDestLocation" class="text-xs text-slate-500 mt-0.5"></p>
+                <div class="mt-3 flex items-center justify-center sm:justify-start gap-3">
+                    <a id="resMatchedDestLink" href="" class="text-xs font-bold text-emerald-700 hover:underline">
+                        Lihat Panduan Destinasi Lengkap →
                     </a>
                 </div>
             </div>
@@ -174,6 +256,8 @@
         document.getElementById('aiDestinasi').value = dest;
     }
 
+    let currentAiData = null;
+
     document.getElementById('aiTripForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -183,10 +267,12 @@
         const btnIcon = document.getElementById('btnIcon');
         const loading = document.getElementById('aiLoading');
         const result = document.getElementById('aiResult');
+        const errorBanner = document.getElementById('aiErrorBanner');
+        const errorMessage = document.getElementById('aiErrorMessage');
 
-        // UI state loading
+        errorBanner.classList.add('hidden');
         submitBtn.disabled = true;
-        btnText.innerText = 'AI Sedang Berpikir...';
+        btnText.innerText = 'AI Sedang Menyusun...';
         btnIcon.innerText = '⏳';
         loading.classList.remove('hidden');
         result.classList.add('hidden');
@@ -205,14 +291,18 @@
             const data = await response.json();
 
             if (!response.ok || !data.success) {
-                alert(data.message || 'Gagal menyusun itinerary. Periksa inputan kamu.');
+                errorMessage.innerText = data.message || 'Gagal menyusun itinerary. Pastikan data form sudah lengkap dan benar.';
+                errorBanner.classList.remove('hidden');
+                errorBanner.scrollIntoView({ behavior: 'smooth' });
                 return;
             }
 
+            currentAiData = data.data;
             renderAiResult(data.data);
         } catch (err) {
             console.error(err);
-            alert('Terjadi kesalahan saat memproses data AI.');
+            errorMessage.innerText = 'Terjadi kesalahan sistem saat menghubungi layanan AI. Silakan coba sesaat lagi.';
+            errorBanner.classList.remove('hidden');
         } finally {
             submitBtn.disabled = false;
             btnText.innerText = 'Generate Itinerary Otomatis Sekarang';
@@ -229,13 +319,38 @@
         document.getElementById('resTitle').innerText = `${data.durasi_hari} Hari di ${data.destinasi}`;
         document.getElementById('resTipeBadge').innerText = data.tipe_liburan;
         document.getElementById('resSummary').innerText = data.ringkasan_ai;
+        document.getElementById('resDurationParty').innerText = `${data.durasi_hari} Hari • ${data.jumlah_orang} Orang`;
         document.getElementById('resTotalKegiatan').innerText = formatRupiah(data.estimasi_total_kegiatan);
         document.getElementById('resTotalAnggaran').innerText = formatRupiah(data.rekomendasi_total_anggaran);
         document.getElementById('resDaysCount').innerText = `${data.durasi_hari} Hari Rencana`;
 
         // Direct create trip link with prefill parameters
-        const saveBtn = document.getElementById('saveToTripBtn');
-        saveBtn.href = `{{ route('trips.create') }}?destinasi=${encodeURIComponent(data.destinasi)}&anggaran=${encodeURIComponent(data.rekomendasi_total_anggaran)}`;
+        const customTripLink = document.getElementById('customTripLink');
+        customTripLink.href = `{{ route('trips.create') }}?destinasi=${encodeURIComponent(data.destinasi)}&anggaran=${encodeURIComponent(data.rekomendasi_total_anggaran)}`;
+
+        // Populate save form inputs
+        const saveTripName = document.getElementById('saveTripName');
+        if (saveTripName) {
+            saveTripName.value = `Liburan ke ${data.destinasi} (${data.tipe_liburan})`;
+            document.getElementById('saveTripDestinasi').value = data.destinasi;
+            document.getElementById('saveTripTanggalMulai').value = data.tanggal_mulai;
+            document.getElementById('saveTripTanggalSelesai').value = data.tanggal_selesai;
+            document.getElementById('saveTripAnggaran').value = data.rekomendasi_total_anggaran;
+            document.getElementById('saveTripCatatan').value = `${data.ringkasan_ai}\n\nTips:\n- ` + data.tips.join('\n- ');
+            document.getElementById('saveTripItinerariesJson').value = JSON.stringify(data.days);
+        }
+
+        // Matched Destination Card
+        const matchedContainer = document.getElementById('resMatchedDestContainer');
+        if (data.matched_destination) {
+            document.getElementById('resMatchedDestTitle').innerText = data.matched_destination.nama;
+            document.getElementById('resMatchedDestLocation').innerText = `📍 ${data.matched_destination.lokasi} • ⭐ ${data.matched_destination.rating}`;
+            document.getElementById('resMatchedDestImg').src = data.matched_destination.image_url;
+            document.getElementById('resMatchedDestLink').href = `/destinasi/${data.matched_destination.slug}`;
+            matchedContainer.classList.remove('hidden');
+        } else {
+            matchedContainer.classList.add('hidden');
+        }
 
         // Days container
         const daysContainer = document.getElementById('resDaysContainer');
@@ -303,6 +418,18 @@
         resultSection.classList.remove('hidden');
         resultSection.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // Save AI Trip form handler
+    const saveAiTripForm = document.getElementById('saveAiTripForm');
+    if (saveAiTripForm) {
+        saveAiTripForm.addEventListener('submit', function() {
+            const saveBtn = document.getElementById('saveAiTripBtn');
+            const saveBtnText = document.getElementById('saveAiTripBtnText');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtnText.innerText = 'Menyimpan Rencana...';
+            }
+        });
+    }
 </script>
 @endpush
-

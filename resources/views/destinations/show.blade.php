@@ -2,20 +2,49 @@
 
 @section('title', $destination->nama . ' — Detail Destinasi | Triply')
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    .leaflet-popup-content-wrapper {
+        border-radius: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        padding: 4px;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="max-w-6xl mx-auto px-6 md:px-12 py-12">
-    <!-- Breadcrumb -->
+    <!-- Breadcrumb & Top Actions -->
     <div class="flex items-center justify-between mb-8">
         <a href="{{ route('destinasi') }}" class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:underline">
             <span>←</span> Kembali ke Semua Destinasi
         </a>
 
-        @if(Auth::check() && Auth::user()->isAdmin())
-            <a href="{{ route('admin.destinations.edit', $destination) }}" 
-               class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition">
-                <span>⚙️ Edit Destinasi (Admin)</span>
-            </a>
-        @endif
+        <div class="flex items-center gap-2">
+            @auth
+                @php $isFav = $destination->isFavoritedBy(Auth::user()); @endphp
+                <form action="{{ route('destinations.favorite.toggle', $destination) }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs {{ $isFav ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50' }}">
+                        <span>{{ $isFav ? '❤️ Tersimpan di Favorit' : '🤍 Tambah ke Favorit' }}</span>
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" 
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition shadow-xs">
+                    <span>🤍 Tambah ke Favorit</span>
+                </a>
+            @endauth
+
+            @if(Auth::check() && Auth::user()->isAdmin())
+                <a href="{{ route('admin.destinations.edit', $destination) }}" 
+                   class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition">
+                    <span>⚙️ Edit Destinasi (Admin)</span>
+                </a>
+            @endif
+        </div>
     </div>
 
     <!-- Main Detail Card -->
@@ -123,6 +152,33 @@
                             </p>
                         </div>
                     @endif
+
+                    <!-- Peta Interaktif Leaflet OpenStreetMap -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <span>🗺️</span> Peta Lokasi & Titik Geografis
+                                </h2>
+                                <p class="text-xs text-slate-500 mt-0.5">Eksplorasi titik lokasi {{ $destination->nama }} secara interaktif via OpenStreetMap.</p>
+                            </div>
+                            <a href="https://www.google.com/maps?q={{ $destination->display_latitude }},{{ $destination->display_longitude }}" 
+                               target="_blank" rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl transition">
+                                <span>Buka Google Maps ↗</span>
+                            </a>
+                        </div>
+
+                        <!-- Map Container -->
+                        <div id="destinationMap" class="w-full h-80 sm:h-96 rounded-2xl border border-slate-200 overflow-hidden relative z-0"></div>
+
+                        <div class="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 pt-3 border-t border-slate-100">
+                            <span class="flex items-center gap-1">
+                                <span>📍</span> Koordinat: <strong class="text-slate-800">{{ number_format($destination->display_latitude, 5) }}, {{ number_format($destination->display_longitude, 5) }}</strong>
+                            </span>
+                            <span class="text-slate-400">Peta ditenagai oleh OpenStreetMap & Leaflet</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Call to Action Side Box (4 cols) -->
@@ -192,4 +248,53 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lat = {{ $destination->display_latitude }};
+        const lng = {{ $destination->display_longitude }};
+        const title = @json($destination->nama);
+        const locationText = @json($destination->lokasi);
+
+        const map = L.map('destinationMap', {
+            scrollWheelZoom: false
+        }).setView([lat, lng], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Custom marker icon using SVG
+        const customIcon = L.divIcon({
+            className: 'custom-map-pin',
+            html: `
+                <div style="background-color: #047857; color: white; border-radius: 9999px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); border: 2px solid white; font-size: 16px;">
+                    📍
+                </div>
+            `,
+            iconSize: [36, 36],
+            iconAnchor: [18, 36],
+            popupAnchor: [0, -36]
+        });
+
+        const popupContent = `
+            <div style="padding: 6px; font-family: inherit;">
+                <h4 style="font-weight: 800; font-size: 14px; color: #0f172a; margin-bottom: 2px;">${title}</h4>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 6px;">📍 ${locationText}</p>
+                <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" rel="noopener noreferrer" style="display: inline-block; font-size: 11px; font-weight: 700; color: #047857; text-decoration: underline;">
+                    Buka Rute di Google Maps →
+                </a>
+            </div>
+        `;
+
+        L.marker([lat, lng], { icon: customIcon })
+            .addTo(map)
+            .bindPopup(popupContent)
+            .openPopup();
+    });
+</script>
+@endpush
 

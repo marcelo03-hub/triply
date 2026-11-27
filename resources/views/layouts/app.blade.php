@@ -79,10 +79,17 @@
 
                 @auth
                     <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">
+                        <a href="{{ route('favorites.index') }}" 
+                           class="p-2 rounded-xl text-slate-500 hover:text-pink-600 hover:bg-pink-50 transition"
+                           title="Destinasi Favorit">
+                            <span class="text-base">❤️</span>
+                        </a>
+                        <a href="{{ route('profile.edit') }}" 
+                           class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-3 py-1.5 rounded-xl transition"
+                           title="Lihat profil">
                             <span>👤</span>
                             <span class="max-w-[120px] truncate">{{ Auth::user()->name }}</span>
-                        </span>
+                        </a>
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
                             <button type="submit" 
@@ -135,6 +142,15 @@
                     @endguest
 
                     @auth
+                        <div class="flex flex-col gap-1.5 pt-1">
+                            <a href="{{ route('favorites.index') }}" class="py-2 px-3 rounded-lg hover:bg-pink-50 text-pink-700 font-bold flex items-center gap-2">
+                                <span>❤️</span> Destinasi Favorit
+                            </a>
+                            <a href="{{ route('profile.edit') }}" class="py-2 px-3 rounded-lg hover:bg-emerald-50 text-emerald-800 font-bold flex items-center gap-2">
+                                <span>👤</span> Profil & Pengaturan Akun
+                            </a>
+                        </div>
+
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 mt-1">
                             <span class="text-xs font-bold text-slate-700 truncate">
                                 👤 {{ Auth::user()->name }}

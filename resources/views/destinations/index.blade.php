@@ -18,14 +18,22 @@
             </p>
         </div>
 
-        @if(Auth::check() && Auth::user()->isAdmin())
-            <div>
+        <div class="flex items-center gap-3">
+            @auth
+                <a href="{{ route('favorites.index') }}" 
+                   class="inline-flex items-center gap-2 bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold shadow-2xs transition">
+                    <span>❤️</span>
+                    <span>Favorit Saya ({{ Auth::user()->favorites()->count() }})</span>
+                </a>
+            @endauth
+
+            @if(Auth::check() && Auth::user()->isAdmin())
                 <a href="{{ route('admin.destinations.create') }}" 
                    class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold shadow-md transition">
                     <span>⚙️ + Tambah Destinasi (Admin)</span>
                 </a>
-            </div>
-        @endif
+            @endif
+        </div>
     </div>
 
     <!-- Filter & Search Bar -->
@@ -122,9 +130,32 @@
                             </span>
 
                             <!-- Rating Badge -->
-                            <span class="absolute top-3 right-3 bg-white/95 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-xs">
+                            <span class="absolute top-3 right-14 bg-white/95 text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-xs">
                                 ⭐ {{ $dest->rating }}
                             </span>
+
+                            <!-- Favorite Toggle Button -->
+                            @auth
+                                @php $isFav = $dest->isFavoritedBy(Auth::user()); @endphp
+                                <form action="{{ route('destinations.favorite.toggle', $dest) }}" method="POST" class="absolute top-3 right-3 z-10">
+                                    @csrf
+                                    <button type="submit" 
+                                            class="w-7 h-7 rounded-full bg-white/95 shadow-md flex items-center justify-center hover:scale-110 transition {{ $isFav ? 'text-red-500' : 'text-slate-400 hover:text-red-500' }}"
+                                            title="{{ $isFav ? 'Hapus dari favorit' : 'Simpan ke favorit' }}">
+                                        <svg class="w-4 h-4 {{ $isFav ? 'fill-current text-red-500' : 'stroke-current fill-none' }}" viewBox="0 0 24 24" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" 
+                                   class="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/95 text-slate-400 hover:text-red-500 shadow-md flex items-center justify-center hover:scale-110 transition"
+                                   title="Masuk untuk menyimpan favorit">
+                                    <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </a>
+                            @endauth
                         </div>
 
                         <!-- Content -->

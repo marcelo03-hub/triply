@@ -48,11 +48,49 @@ class Trip extends Model
     }
 
     /**
+     * Get the expenses for this trip.
+     *
+     * @return HasMany<Expense, $this>
+     */
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class)->orderBy('tanggal', 'desc')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the packing items for this trip.
+     *
+     * @return HasMany<PackingItem, $this>
+     */
+    public function packingItems(): HasMany
+    {
+        return $this->hasMany(PackingItem::class)->orderBy('is_packed')->orderBy('kategori');
+    }
+
+    /**
      * Total cost from itineraries.
      */
     public function totalItineraryCost(): float
     {
         return (float) $this->itineraries()->sum('estimasi_biaya');
+    }
+
+    /**
+     * Total actual expense.
+     */
+    public function totalActualExpense(): float
+    {
+        return (float) $this->expenses()->sum('nominal');
+    }
+
+    /**
+     * Find matched destination by trip destination name.
+     */
+    public function findDestination(): ?Destination
+    {
+        return Destination::where('nama', 'like', "%{$this->destinasi}%")
+            ->orWhere('lokasi', 'like', "%{$this->destinasi}%")
+            ->first();
     }
 
     /**

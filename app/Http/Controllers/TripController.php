@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Destination;
 use App\Models\Trip;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class TripController extends Controller
@@ -102,13 +105,24 @@ class TripController extends Controller
     {
         Gate::authorize('view', $trip);
 
-        $trip->load('itineraries');
+        $trip->load(['itineraries', 'expenses', 'packingItems', 'user']);
         $start = Carbon::parse($trip->tanggal_mulai);
         $end = Carbon::parse($trip->tanggal_selesai);
         $durationDays = max(1, $start->diffInDays($end) + 1);
 
         $itinerariesByDay = $trip->itineraries->groupBy('hari_ke');
         $totalItineraryCost = $trip->totalItineraryCost();
+        $totalActualExpense = $trip->totalActualExpense();
+
+        $expenses = $trip->expenses;
+        $expensesByCategory = $expenses->groupBy(fn ($item) => strtolower($item->kategori))->map(fn ($group) => $group->sum('nominal'));
+
+        $packingItems = $trip->packingItems;
+        $totalPacking = $packingItems->count();
+        $packedCount = $packingItems->where('is_packed', true)->count();
+        $packingPercentage = $totalPacking > 0 ? round(($packedCount / $totalPacking) * 100) : 0;
+        $packingByCategory = $packingItems->groupBy('kategori');
+        $destination = $trip->findDestination();
 
         // Simple default budget breakdown suggestion
         $anggaran = (float) $trip->anggaran;
@@ -145,7 +159,22 @@ class TripController extends Controller
             ],
         ];
 
-        return view('trips.show', compact('trip', 'durationDays', 'budgetBreakdown', 'itinerariesByDay', 'totalItineraryCost'));
+        return view('trips.show', compact(
+            'trip',
+            'durationDays',
+            'budgetBreakdown',
+            'itinerariesByDay',
+            'totalItineraryCost',
+            'totalActualExpense',
+            'expenses',
+            'expensesByCategory',
+            'packingItems',
+            'totalPacking',
+            'packedCount',
+            'packingPercentage',
+            'packingByCategory',
+            'destination'
+        ));
     }
 
     /**
@@ -239,5 +268,27 @@ class TripController extends Controller
         })->sortByDesc('total');
 
         return view('anggaran', compact('trips', 'totalAnggaran', 'averageAnggaran', 'maxTrip', 'budgetByDestination'));
+    }
+
+    /**
+     * Export Trip Itinerary and Details as PDF.
+     */
+    public function exportPdf(Trip $trip): Response
+    {
+        Gate::authorize('view', $trip);
+
+        $trip->load(['itineraries', 'user', 'expenses']);
+        $start = Carbon::parse($trip->tanggal_mulai);
+        $end = Carbon::parse($trip->tanggal_selesai);
+        $durationDays = max(1, $start->diffInDays($end) + 1);
+        $itinerariesByDay = $trip->itineraries->groupBy('hari_ke');
+        $totalItineraryCost = $trip->totalItineraryCost();
+        $totalActualExpense = $trip->totalActualExpense();
+
+        $pdf = Pdf::loadView('trips.pdf', compact('trip', 'durationDays', 'itinerariesByDay', 'totalItineraryCost', 'totalActualExpense'));
+
+        $filename = 'Triply-Itinerary-'.Str::slug($trip->nama_perjalanan).'.pdf';
+
+        return $pdf->download($filename);
     }
 }
